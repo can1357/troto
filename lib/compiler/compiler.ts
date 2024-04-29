@@ -1,14 +1,14 @@
 import ts from 'typescript';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as proto from '../proto';
-import { Resolver } from './resolver';
-import { OutputFile } from './output';
+import * as proto from '../proto/index.js';
+import { Resolver } from './resolver.js';
+import { OutputFile } from './output.js';
 import { pascalCase, snakeCase } from 'change-case';
-import { hasModifier } from './utils';
-import * as pb from '../pbplugin';
+import { hasModifier } from './utils.js';
+import * as pb from '../pbplugin/index.js';
 import z from 'zod';
-import { FieldOptionEncoderByType, OptionEncoders, OptionsType } from '../proto/cvt';
+import { FieldOptionEncoderByType, OptionEncoders, OptionsType } from '../proto/cvt.js';
 import JSON5 from 'json5';
 import { spawnSync } from 'node:child_process';
 

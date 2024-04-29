@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { Scope } from '../proto';
+import { Scope } from '../proto/index.js';
 
 export function hasModifier(n: ts.Node, kind: ts.SyntaxKind) {
 	if ('modifiers' in n && Array.isArray(n.modifiers)) {

@@ -1,6 +1,6 @@
 import ts from 'typescript';
-import type { EnumDef, MessageDef, ServiceDef } from './udts';
-import type * as pb from '../pbplugin';
+import type { EnumDef, MessageDef, ServiceDef } from './udts.js';
+import type * as pb from '../pbplugin/index.js';
 
 // Literal types.
 export type IntLit = number | bigint;

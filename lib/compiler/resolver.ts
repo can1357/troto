@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import * as proto from '../proto';
+import * as proto from '../proto/index.js';
 
 type TypeResolution = { type: proto.TypeExpr; attrs?: proto.OptionsRecord };
 

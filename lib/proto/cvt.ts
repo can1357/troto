@@ -1,8 +1,8 @@
 import { pascalCase } from 'change-case';
-import * as pb from '../pbplugin';
-import { Lit, OptionsExpr, PrintFlags, Root, TypeExpr, encodeLiteral } from './base';
-import { MapTypeExpr, OptionalTypeExpr, RepeatedTypeExpr, StreamTypeExpr } from './types';
-import { EnumDef, EnumFieldDef, MessageDef, OneofTypeExpr, ReservedFieldDef, RpcTypeExpr, ServiceDef, SimpleFieldDef } from './udts';
+import * as pb from '../pbplugin/index.js';
+import { Lit, OptionsExpr, PrintFlags, Root, TypeExpr, encodeLiteral } from './base.js';
+import { MapTypeExpr, OptionalTypeExpr, RepeatedTypeExpr, StreamTypeExpr } from './types.js';
+import { EnumDef, EnumFieldDef, MessageDef, OneofTypeExpr, ReservedFieldDef, RpcTypeExpr, ServiceDef, SimpleFieldDef } from './udts.js';
 import * as gp from 'google-protobuf';
 
 export type OptionsType =

@@ -1,7 +1,7 @@
 import ts from 'typescript';
-import * as proto from '../proto';
-import { Resolver } from './resolver';
-import { getQualifiedName, printTypeFlags, resolveSymbol } from './utils';
+import * as proto from '../proto/index.js';
+import { Resolver } from './resolver.js';
+import { getQualifiedName, printTypeFlags, resolveSymbol } from './utils.js';
 
 type TSDecl = ts.TypeAliasDeclaration | ts.InterfaceDeclaration | ts.EnumDeclaration | ts.ClassDeclaration;
 

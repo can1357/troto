@@ -1,7 +1,6 @@
 interface OptionSpec {
 	[k: string]: string | boolean | number | bigint | null;
 }
-
 interface Link<Name extends string> {
 	__protobuf_link: Name;
 }
@@ -42,3 +41,5 @@ type fixed32 = Link<'fixed32'>;
 type fixed64 = Link<'fixed64'>;
 type sfixed32 = Link<'sfixed32'>;
 type sfixed64 = Link<'sfixed64'>;
+
+declare function FileOpt(name: string, value: string | boolean | number | bigint | null): void;

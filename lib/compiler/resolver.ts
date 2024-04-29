@@ -17,6 +17,27 @@ export class Resolver {
 		return new Resolver(program);
 	}
 
+	getLitralValue(value: ts.Type): string | number | boolean | bigint | null {
+		if (value.isStringLiteral()) {
+			return value.value as string;
+		} else if (value.isNumberLiteral()) {
+			return value.value as number;
+		} else if (value == this.checker.getTrueType()) {
+			return true;
+		} else if (value == this.checker.getFalseType()) {
+			return false;
+		} else if (value.flags & ts.TypeFlags.BigIntLiteral) {
+			const pseudoBigint = (value as ts.BigIntLiteralType).value;
+			const realBigInt = BigInt(pseudoBigint.base10Value);
+			if (pseudoBigint.negative) {
+				return -realBigInt;
+			} else {
+				return realBigInt;
+			}
+		}
+		return null;
+	}
+
 	getTypeArgs(ty: ts.Type, n: number): TypeResolution[] {
 		const result: TypeResolution[] = [];
 		try {
@@ -208,23 +229,9 @@ export class Resolver {
 					const extTy = this.checker.getTypeOfSymbolAtLocation(extField, extField.valueDeclaration);
 					for (const member of this.checker.getPropertiesOfType(extTy)) {
 						const name = member.name;
-						const value = this.checker.getTypeOfSymbolAtLocation(member, extField.valueDeclaration);
-						if (value.isStringLiteral()) {
-							attrs[name] = value.value as string;
-						} else if (value.isNumberLiteral()) {
-							attrs[name] = value.value as number;
-						} else if (value == this.checker.getTrueType()) {
-							attrs[name] = true;
-						} else if (value == this.checker.getFalseType()) {
-							attrs[name] = false;
-						} else if (value.flags & ts.TypeFlags.BigIntLiteral) {
-							const pseudoBigint = (value as ts.BigIntLiteralType).value;
-							const realBigInt = BigInt(pseudoBigint.base10Value);
-							if (pseudoBigint.negative) {
-								attrs[name] = -realBigInt;
-							} else {
-								attrs[name] = realBigInt;
-							}
+						const value = this.getLitralValue(this.checker.getTypeOfSymbolAtLocation(member, extField.valueDeclaration));
+						if (value !== null) {
+							attrs[name] = value;
 						}
 					}
 				}

@@ -28,11 +28,14 @@ const ExtensionOptions = z.object({
 type PluginOptions = z.infer<typeof PluginOptions>;
 const CompilerOptions = z
 	.object({
-		package: z.object({
-			go: z.string(),
-			java: z.string()
-		}),
-		noDump: z.boolean(),
+		package: z
+			.object({
+				go: z.string(),
+				java: z.string()
+			})
+			.partial(),
+		dump: z.boolean().default(true),
+		proto: z.boolean().default(true),
 		plugins: z.record(PluginOptions),
 		extend: z
 			.object({
@@ -114,10 +117,8 @@ export class Compiler {
 			const packageName = packageParts.map(s => snakeCase(s)).join('.');
 			const protoFile = new OutputFile(pathRelativeToPackage, this.resolver, file);
 
-			// Set the package name
+			// Set the package name and default options
 			protoFile.package = packageName;
-
-			// Set the options
 			protoFile.options.assign({
 				java_multiple_files: true,
 				cc_enable_arenas: true,
@@ -130,6 +131,30 @@ export class Compiler {
 				php_metadata_namespace: packageParts.map(s => pascalCase(s)).join('\\') + '\\PBMetadata',
 				go_package: `${options.package?.go ? options.package?.go + '/' : ''}${packageParts.map(s => snakeCase(s)).join('/')}`
 			});
+
+			// Handle top level: FileOpt('objc_class_prefix', 'GPB');
+			ts.forEachChild(file, node => {
+				if (node.kind == ts.SyntaxKind.ExpressionStatement) {
+					const expr = (node as ts.ExpressionStatement).expression;
+					if (ts.isCallExpression(expr)) {
+						const fn = expr.expression;
+						if (ts.isIdentifier(fn)) {
+							const name = fn.escapedText;
+							if (name === 'FileOpt') {
+								const args = expr.arguments;
+								if (args.length === 2) {
+									const key = this.resolver.getLitralValue(this.checker.getTypeAtLocation(args[0]));
+									const val = this.resolver.getLitralValue(this.checker.getTypeAtLocation(args[1]));
+									if (typeof key === 'string' && val !== null) {
+										protoFile.options.set(key, val);
+									}
+								}
+							}
+						}
+					}
+				}
+			});
+
 			this.files.set(file, protoFile);
 		}
 	}
@@ -301,11 +326,11 @@ export class Compiler {
 								defn = targetFile.getDefinition(val.name);
 							}
 							if (defn) {
-								if (targetFile.package === 'google.protobuf') {
-									if (file.package !== 'google.protobuf') {
-										if (!file.imports.find(i => i.path === 'google/protobuf/index.proto')) {
-											file.imports.push({ path: 'google/protobuf/index.proto' });
-										}
+								if (targetFile.package !== file.package) {
+									const importName = targetFile.name.replace(/\.ts$/, '.proto');
+									if (!file.imports.find(i => i.path === importName)) {
+										file.imports.push({ path: importName });
+										console.log('Adding import:', importName);
 									}
 								}
 								break;
@@ -361,6 +386,14 @@ export class Compiler {
 		}
 	}
 
+	run() {
+		this.parse();
+		if (this.options.proto) {
+			this.writeProto();
+		}
+		this.runPlugins();
+	}
+
 	runPluginOn(name: string, opts: PluginOptions, fds: pb.FileDescriptorSet, fileList: string[]) {
 		const compilerVersion = new pb.Version();
 		compilerVersion.setMajor(5);
@@ -411,7 +444,7 @@ export class Compiler {
 		const plugins = Object.entries(this.options?.plugins ?? {});
 		if (!plugins.length) return;
 		const fullList = proto.cvt.createFdSet(this.files.values());
-		if (!this.options.noDump) {
+		if (this.options.proto && this.options.dump) {
 			this.writeFile([this.defaultOutDir(), 'request.json'], JSON.stringify(fullList.toObject(), null, 2));
 		}
 

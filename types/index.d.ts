@@ -6,8 +6,8 @@ interface Link<Name extends string> {
 	__protobuf_link: Name;
 }
 interface Ext<T, O extends OptionSpec> {
-	__protobuf_base: T;
-	__protobuf_ext: O;
+	__protobuf_base: T extends Ext<infer U, any> ? U : T;
+	__protobuf_ext: T extends Ext<any, infer U> ? U & O : O;
 }
 interface Map<K, V> {
 	__protobuf_map_key: K;

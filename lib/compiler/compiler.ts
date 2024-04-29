@@ -77,6 +77,7 @@ export class Compiler {
 				Object.assign(options, CompilerOptions.parse(tsconfig.troto));
 			}
 			delete compilerOptions.moduleResolution;
+			compilerOptions.noLib = true;
 			compilerOptions.strict = true;
 		}
 		if (compilerOptions.rootDir && !path.isAbsolute(compilerOptions.rootDir)) {
@@ -102,7 +103,10 @@ export class Compiler {
 			if (file.isDeclarationFile) continue;
 			// Auto-generate package names and file names
 			const packageBase = findPackageBase(file.fileName);
-			const pathRelativeToPackage = path.relative(packageBase, file.fileName);
+			let pathRelativeToPackage = path.relative(packageBase, file.fileName);
+			if (pathRelativeToPackage.startsWith('types/') || pathRelativeToPackage.startsWith('types\\')) {
+				pathRelativeToPackage = pathRelativeToPackage.slice(6);
+			}
 			const packageParts = path.dirname(pathRelativeToPackage).split(path.sep);
 			const [baseName] = path.basename(pathRelativeToPackage).split('.').slice(0, 1);
 			const packageName = packageParts.map(s => snakeCase(s)).join('.');
@@ -169,9 +173,7 @@ export class Compiler {
 				}
 			}
 			if (!hasModifier(node, ts.SyntaxKind.ExportKeyword)) return;
-			if (ts.isTypeAliasDeclaration(node)) {
-				file.handleDecl(node);
-			} else if (ts.isInterfaceDeclaration(node)) {
+			if (ts.isInterfaceDeclaration(node)) {
 				file.handleDecl(node);
 			} else if (ts.isEnumDeclaration(node)) {
 				file.handleDecl(node);

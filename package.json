@@ -1,12 +1,13 @@
 {
 	"name": "troto",
-	"version": "1.0.6",
+	"version": "1.0.8",
 	"type": "module",
 	"bin": {
 		"trotoc": "dist/cli.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"types"
 	],
 	"scripts": {
 		"build": "tsc",

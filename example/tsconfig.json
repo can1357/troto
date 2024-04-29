@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"outDir": "./dist/proto",
+		"types": ["troto-prototypes"]
+	},
+	"troto": {
+		"plugins": {
+			"go": {
+				"outDir": "./dist/go",
+				"paths": "source_relative"
+			}
+		}
+	}
+}

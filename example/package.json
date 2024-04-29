@@ -1,0 +1,7 @@
+{
+	"name": "example-project",
+	"type": "module",
+	"dependencies": {
+		"troto-prototypes": "file:../types"
+	}
+}

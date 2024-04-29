@@ -1,0 +1,27 @@
+{
+	"name": "troto",
+	"version": "1.0.0",
+	"bin": {
+		"trotoc": "./dist/cli.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/cli.js"
+	},
+	"author": "Can Bölük",
+	"license": "MIT",
+	"description": "Troto compiler",
+	"devDependencies": {
+		"@types/node": "^20.12.7",
+		"@types/google-protobuf": "^3.15.12",
+		"@types/json5": "^2.2.0",
+		"tsc": "^2.0.4"
+	},
+	"dependencies": {
+		"change-case": "^5.4.4",
+		"google-protobuf": "^3.21.2",
+		"json5": "^2.2.3",
+		"typescript": "^5.4.5",
+		"zod": "^3.23.4"
+	}
+}

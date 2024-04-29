@@ -1,0 +1,19 @@
+{
+	"include": ["lib/**/*.ts", "lib/**/*.js", "lib/**/*.cjs", "types.d.ts"],
+	"compilerOptions": {
+		"lib": ["esnext"],
+		"target": "esnext",
+		"module": "NodeNext",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"experimentalDecorators": true,
+		"strict": true,
+		"outDir": "./dist",
+		"rootDir": "./lib",
+		"resolveJsonModule": true,
+		"sourceMap": true,
+		"skipLibCheck": true,
+		"moduleResolution": "NodeNext",
+		"allowJs": true
+	}
+}

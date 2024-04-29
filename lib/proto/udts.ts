@@ -1,4 +1,4 @@
-import { FieldDef, IndexAllocator, OptionsExpr, TypeDef, TypeExpr, TypeKind, Visitor } from './base.js';
+import { FieldDef, IndexAllocator, OptionsExpr, TypeDef, TypeExpr, TypeKind, Visitor } from './base';
 
 // message name { ... }
 type MessageBodyStmt = SimpleFieldDef | EnumDef | MessageDef | ReservedFieldDef;

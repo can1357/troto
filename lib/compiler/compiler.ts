@@ -1,14 +1,14 @@
 import ts from 'typescript';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as proto from '../proto/index.js';
-import { Resolver } from './resolver.js';
-import { OutputFile } from './output.js';
+import * as proto from '../proto';
+import { Resolver } from './resolver';
+import { OutputFile } from './output';
 import { pascalCase, snakeCase } from 'change-case';
-import { hasModifier } from './utils.js';
-import * as pb from '../pbplugin/index.js';
+import { hasModifier } from './utils';
+import * as pb from '../pbplugin';
 import z from 'zod';
-import { FieldOptionEncoderByType, OptionEncoders, OptionsType } from '../proto/cvt.js';
+import { FieldOptionEncoderByType, OptionEncoders, OptionsType } from '../proto/cvt';
 import JSON5 from 'json5';
 import { spawnSync } from 'node:child_process';
 
@@ -215,8 +215,20 @@ export class Compiler {
 	}
 
 	parse() {
+		// Print diagnostics
+		const diagnostics = this.resolver.program.getSemanticDiagnostics();
+		diagnostics.forEach(diag => {
+			console.error(
+				ts.formatDiagnostic(diag, {
+					getCanonicalFileName: s => s,
+					getCurrentDirectory: () => '',
+					getNewLine: () => '\n'
+				})
+			);
+		});
+
+		// Process all files
 		for (const file of this.files.values()) {
-			console.log('Processing:', file.source.fileName);
 			this.processChildren(file, file.source);
 		}
 

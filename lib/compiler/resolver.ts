@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import * as proto from '../proto/index.js';
+import * as proto from '../proto';
 
 type TypeResolution = { type: proto.TypeExpr; attrs?: proto.OptionsRecord };
 
@@ -99,6 +99,9 @@ export class Resolver {
 			} else if (ty.flags & ts.TypeFlags.Void) {
 				return { type: new proto.TypeRefExpr('google.protobuf.Empty', 'TYPE_MESSAGE') };
 			} else if (ty.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) {
+				if (ty.symbol && ty.symbol?.name !== 'any' && ty.symbol?.name !== 'unknown') {
+					console.error('Failed to resolve type:', this.checker.typeToString(ty));
+				}
 				return { type: new proto.TypeRefExpr('google.protobuf.Any', 'TYPE_MESSAGE', ty) };
 			}
 

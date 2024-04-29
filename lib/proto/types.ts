@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { PrintFlags, TypeExpr, TypeKind, Visitor } from './base.js';
+import { PrintFlags, TypeExpr, TypeKind, Visitor } from './base';
 
 export enum Builtin {
 	int32,

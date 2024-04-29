@@ -29,7 +29,7 @@ export interface VectorService {
 	"compilerOptions": {
 		"strict": true,
 		"outDir": "./dist/proto",
-		"types": ["troto-prototypes"]
+		"types": ["troto/types"]
 	}
 }
 ```
@@ -89,7 +89,7 @@ Let's modify the tsconfig.json file:
 	"compilerOptions": {
 		"strict": true,
 		"outDir": "./dist/proto",
-		"types": ["troto-prototypes"]
+		"types": ["troto/types"]
 	},
 	"troto": {
 		"plugins": {

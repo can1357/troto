@@ -1,6 +1,7 @@
 {
-	"include": ["index.d.ts"],
+	"include": ["./index.d.ts"],
 	"compilerOptions": {
-		"strict": true
+		"strict": true,
+		"rootDir": "./"
 	}
 }

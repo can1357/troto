@@ -1,6 +1,8 @@
-import { Compiler } from './compiler/compiler.js';
+import { realpathSync } from 'fs';
+import { Compiler } from './compiler/compiler';
 
-const dir = process.argv[2] ?? './';
+const dir = realpathSync(process.argv[2] ?? './');
+process.chdir(dir);
 const compiler = new Compiler(dir);
 compiler.parse();
 compiler.writeProto();

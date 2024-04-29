@@ -1,8 +1,8 @@
-interface Vector3<T> {
+type Vector3<T> = {
 	x$1: T;
 	y$2: T;
 	z$3: T;
-}
+};
 
 export interface Vector3f extends Vector3<float> {}
 export interface Vector3d extends Vector3<double> {}

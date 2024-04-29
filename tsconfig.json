@@ -1,19 +1,16 @@
 {
-	"include": ["lib/**/*.ts", "lib/**/*.js", "lib/**/*.cjs", "types.d.ts"],
+	"include": ["lib/**/*.ts", "lib/**/*.js", "lib/**/*.cjs"],
 	"compilerOptions": {
 		"lib": ["esnext"],
 		"target": "esnext",
-		"module": "NodeNext",
+		"module": "esnext",
+		"moduleResolution": "Bundler",
 		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"experimentalDecorators": true,
 		"strict": true,
 		"outDir": "./dist",
 		"rootDir": "./lib",
-		"resolveJsonModule": true,
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"moduleResolution": "NodeNext",
 		"allowJs": true
 	}
 }

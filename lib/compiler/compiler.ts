@@ -34,9 +34,10 @@ const CompilerOptions = z
 				java: z.string()
 			})
 			.partial(),
-		dump: z.boolean().default(true),
-		proto: z.boolean().default(true),
+		dump: z.boolean(),
+		proto: z.boolean(),
 		plugins: z.record(PluginOptions),
+		ignore: z.string().array(),
 		extend: z
 			.object({
 				file: z.record(ExtensionOptions),
@@ -57,13 +58,15 @@ type CompilerOptions = z.infer<typeof CompilerOptions>;
 export class Compiler {
 	resolver: Resolver;
 	files = new Map<ts.SourceFile, OutputFile>();
-
 	get checker() {
 		return this.resolver.checker;
 	}
 
 	constructor(public root: string, public options: CompilerOptions = {}) {
 		this.root = fs.realpathSync(root);
+		options.dump ??= true;
+		options.proto ??= true;
+		options.ignore ??= ['google.protobuf'];
 
 		const includeList: string[] = [];
 		for (const file of fs.readdirSync(root, { recursive: true, withFileTypes: true })) {
@@ -330,7 +333,6 @@ export class Compiler {
 									const importName = targetFile.name.replace(/\.ts$/, '.proto');
 									if (!file.imports.find(i => i.path === importName)) {
 										file.imports.push({ path: importName });
-										console.log('Adding import:', importName);
 									}
 								}
 								break;
@@ -380,18 +382,21 @@ export class Compiler {
 		fs.writeFileSync(outputFile, content);
 	}
 
-	writeProto() {
-		for (const file of this.files.values()) {
-			this.writeFile([this.defaultOutDir(), file.name!.replace(/\.ts$/, '.proto')], file.write().join('\n'));
-		}
-	}
-
 	run() {
 		this.parse();
 		if (this.options.proto) {
 			this.writeProto();
 		}
 		this.runPlugins();
+	}
+
+	writeProto() {
+		for (const file of this.files.values()) {
+			if (file.package && this.options.ignore?.includes(file.package)) {
+				continue;
+			}
+			this.writeFile([this.defaultOutDir(), file.name!.replace(/\.ts$/, '.proto')], file.write().join('\n'));
+		}
 	}
 
 	runPluginOn(name: string, opts: PluginOptions, fds: pb.FileDescriptorSet, fileList: string[]) {
@@ -452,6 +457,9 @@ export class Compiler {
 		const byPackage = new Map<string, string[]>();
 		for (const file of fullList.getFileList()) {
 			const pkg = file.getPackage();
+			if (pkg && this.options.ignore?.includes(pkg)) {
+				continue;
+			}
 			let set = byPackage.get(pkg || '');
 			if (!set) {
 				set = [];

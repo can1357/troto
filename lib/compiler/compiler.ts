@@ -8,7 +8,7 @@ import { pascalCase, snakeCase } from 'change-case';
 import { hasModifier } from './utils.js';
 import * as pb from '../pbplugin/index.js';
 import z from 'zod';
-import { FieldOptionEncoderByType, OptionEncoders, OptionsType } from '../proto/cvt.js';
+import { extendOptions } from '../proto/cvt.js';
 import JSON5 from 'json5';
 import { spawnSync } from 'node:child_process';
 
@@ -20,15 +20,9 @@ const PluginOptions = z
 	})
 	.refine(v => typeof v.outDir === 'string', { message: 'outDir must be a string' });
 
-type MsgType = keyof typeof proto.cvt.FieldOptionEncoderByType;
-const MsgType = Object.keys(proto.cvt.FieldOptionEncoderByType).reduce<z.ZodLiteral<MsgType>>((acc, key) => {
-	const lit = z.literal(key as MsgType);
-	return acc.or(lit) as any as z.ZodLiteral<MsgType>;
-}, z.literal('string') as z.ZodLiteral<MsgType>);
-
 const ExtensionOptions = z.object({
 	field: z.number(),
-	type: MsgType
+	type: z.string()
 });
 
 type PluginOptions = z.infer<typeof PluginOptions>;
@@ -92,25 +86,7 @@ export class Compiler {
 			compilerOptions.baseUrl = path.join(root, compilerOptions.baseUrl);
 		}
 		this.resolver = Resolver.create(includeList, compilerOptions);
-
-		const assignExtOpts = (ty: OptionsType, opts?: Record<string, z.infer<typeof ExtensionOptions>>) => {
-			if (!opts) return;
-			for (const [name, field] of Object.entries(opts)) {
-				const encoder = FieldOptionEncoderByType[field.type];
-				if (!encoder) {
-					throw new Error(`Unknown option type: ${field.type}`);
-				}
-				OptionEncoders.get(ty)![name] = encoder.bind(null, field.field);
-			}
-		};
-		assignExtOpts(pb.FileOptions, options.extend?.file);
-		assignExtOpts(pb.MessageOptions, options.extend?.message);
-		assignExtOpts(pb.FieldOptions, options.extend?.field);
-		assignExtOpts(pb.EnumOptions, options.extend?.enum);
-		assignExtOpts(pb.EnumValueOptions, options.extend?.enumValue);
-		assignExtOpts(pb.ServiceOptions, options.extend?.service);
-		assignExtOpts(pb.MethodOptions, options.extend?.method);
-		assignExtOpts(pb.OneofOptions, options.extend?.oneof);
+		options.extend && extendOptions(options.extend);
 
 		const findPackageBase = (filename: string): string => {
 			const pkg = path.dirname(filename);

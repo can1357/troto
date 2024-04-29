@@ -4,22 +4,12 @@ import { Lit, OptionsExpr, PrintFlags, Root, TypeExpr, encodeLiteral } from './b
 import { MapTypeExpr, OptionalTypeExpr, RepeatedTypeExpr, StreamTypeExpr } from './types.js';
 import { EnumDef, EnumFieldDef, MessageDef, OneofTypeExpr, ReservedFieldDef, RpcTypeExpr, ServiceDef, SimpleFieldDef } from './udts.js';
 import * as gp from 'google-protobuf';
+import WellKnownExtensions from './ext/index.js';
 
-export type OptionsType =
-	| typeof pb.FileOptions
-	| typeof pb.MessageOptions
-	| typeof pb.FieldOptions
-	| typeof pb.EnumOptions
-	| typeof pb.EnumValueOptions
-	| typeof pb.ServiceOptions
-	| typeof pb.MethodOptions
-	| typeof pb.OneofOptions
-	| typeof pb.ExtensionRangeOptions;
+// ---- Option Encoding ----
 
 type OptionEncoder = (writer: gp.BinaryWriter, value: Lit) => void;
 type FieldOptionEncoder = (field: number, writer: gp.BinaryWriter, value: Lit) => void;
-
-export const OptionEncoders = new Map<OptionsType, Record<string, OptionEncoder>>();
 
 function coerceBytes(value: Lit): Uint8Array {
 	if (typeof value === 'string') {
@@ -90,7 +80,7 @@ function writeBytes(field: number, writer: gp.BinaryWriter, value: Lit) {
 	return writer.writeBytes(field, v);
 }
 
-export const FieldOptionEncoderByType = {
+const ValueEncoders = {
 	string: writeString,
 	enum: writeEnum,
 	bool: writeBool,
@@ -107,74 +97,56 @@ export const FieldOptionEncoderByType = {
 	sfixed32: (f, w, v) => w.writeSfixed32(f, Number(coerceNumeric(v))),
 	sfixed64: (f, w, v) => w.writeSfixed64(f, Number(coerceNumeric(v))),
 	bytes: writeBytes
-} satisfies Record<string, FieldOptionEncoder>;
+} as Record<string, FieldOptionEncoder>;
 
-// File options
-OptionEncoders.set(pb.FileOptions, {
-	java_package: writeString.bind(null, 1),
-	java_outer_classname: writeString.bind(null, 8),
-	java_multiple_files: writeBool.bind(null, 10),
-	java_generate_equals_and_hash: writeBool.bind(null, 20),
-	java_string_check_utf8: writeBool.bind(null, 27),
-	optimize_for: writeEnum.bind(null, 9),
-	go_package: writeString.bind(null, 11),
-	cc_generic_services: writeBool.bind(null, 16),
-	java_generic_services: writeBool.bind(null, 17),
-	py_generic_services: writeBool.bind(null, 18),
-	php_generic_services: writeBool.bind(null, 42),
-	deprecated: writeBool.bind(null, 23),
-	cc_enable_arenas: writeBool.bind(null, 31),
-	objc_class_prefix: writeString.bind(null, 36),
-	csharp_namespace: writeString.bind(null, 37),
-	swift_prefix: writeString.bind(null, 39),
-	php_class_prefix: writeString.bind(null, 40),
-	php_namespace: writeString.bind(null, 41),
-	php_metadata_namespace: writeString.bind(null, 44),
-	ruby_package: writeString.bind(null, 45)
-});
-// Field options
-OptionEncoders.set(pb.FieldOptions, {
-	ctype: writeEnum.bind(null, 1),
-	packed: writeBool.bind(null, 2),
-	jstype: writeEnum.bind(null, 6),
-	lazy: writeBool.bind(null, 5),
-	deprecated: writeBool.bind(null, 3),
-	weak: writeBool.bind(null, 10)
-});
-// Message options
-OptionEncoders.set(pb.MessageOptions, {
-	message_set_wire_format: writeBool.bind(null, 1),
-	no_standard_descriptor_accessor: writeBool.bind(null, 2),
-	deprecated: writeBool.bind(null, 3),
-	map_entry: writeBool.bind(null, 7)
-});
-// Enum options
-OptionEncoders.set(pb.EnumOptions, {
-	allow_alias: writeBool.bind(null, 2),
-	deprecated: writeBool.bind(null, 3)
-});
-// Enum value options
-OptionEncoders.set(pb.EnumValueOptions, {
-	deprecated: writeBool.bind(null, 1)
-});
-// Service options
-OptionEncoders.set(pb.ServiceOptions, {
-	deprecated: writeBool.bind(null, 33)
-});
-// Method options
-OptionEncoders.set(pb.MethodOptions, {
-	deprecated: writeBool.bind(null, 33),
-	idempotency_level: writeEnum.bind(null, 34)
-});
-// Oneof options
-OptionEncoders.set(pb.OneofOptions, {
-	deprecated: writeBool.bind(null, 33)
-});
-// Extension range options
-OptionEncoders.set(pb.ExtensionRangeOptions, {
-	// No options
-});
+// ---- Option types ----
 
+type OptionsType =
+	| typeof pb.FileOptions
+	| typeof pb.MessageOptions
+	| typeof pb.FieldOptions
+	| typeof pb.EnumOptions
+	| typeof pb.EnumValueOptions
+	| typeof pb.ServiceOptions
+	| typeof pb.MethodOptions
+	| typeof pb.OneofOptions
+	| typeof pb.ExtensionRangeOptions;
+const OptionTypes = {
+	file: pb.FileOptions,
+	message: pb.MessageOptions,
+	field: pb.FieldOptions,
+	enum: pb.EnumOptions,
+	enumValue: pb.EnumValueOptions,
+	service: pb.ServiceOptions,
+	method: pb.MethodOptions,
+	oneof: pb.OneofOptions,
+	extensionRange: pb.ExtensionRangeOptions
+} as Record<string, OptionsType>;
+const OptionEncoders = new Map<OptionsType, Record<string, OptionEncoder>>();
+for (const k of Object.values(OptionTypes)) {
+	OptionEncoders.set(k, {});
+}
+
+export type OptSpec = { type: string; field: number };
+export type OptMapSpec = Record<string, OptSpec>;
+
+// Add all well-known options
+//
+export function extendOptions(map: Record<string, OptMapSpec>) {
+	for (const [tyid, opts] of Object.entries(map)) {
+		const ext = OptionEncoders.get(OptionTypes[tyid]);
+		if (!ext) throw new Error(`Unknown option type: ${tyid}`);
+		for (const [name, field] of Object.entries(opts)) {
+			const encoder = ValueEncoders[field.type];
+			if (!encoder) throw new Error(`Unknown option value-type: ${field.type}`);
+			ext[name] = encoder.bind(null, field.field);
+		}
+	}
+}
+WellKnownExtensions.forEach(ext => extendOptions(ext));
+
+// Small hack to make sure our encoding is used as is when serializing.
+//
 const kFrozen = Symbol('frozen');
 for (const optType of OptionEncoders.keys()) {
 	const orig = optType.serializeBinaryToWriter;

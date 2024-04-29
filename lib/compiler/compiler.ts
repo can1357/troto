@@ -84,8 +84,6 @@ export class Compiler {
 				Object.assign(options, CompilerOptions.parse(tsconfig.troto));
 			}
 			delete compilerOptions.moduleResolution;
-			compilerOptions.noLib = true;
-			compilerOptions.strict = true;
 		}
 		if (compilerOptions.rootDir && !path.isAbsolute(compilerOptions.rootDir)) {
 			compilerOptions.rootDir = path.join(root, compilerOptions.rootDir);
@@ -93,6 +91,8 @@ export class Compiler {
 		if (compilerOptions.baseUrl && !path.isAbsolute(compilerOptions.baseUrl)) {
 			compilerOptions.baseUrl = path.join(root, compilerOptions.baseUrl);
 		}
+		compilerOptions.skipLibCheck = true;
+		compilerOptions.strict = true;
 		this.resolver = Resolver.create(includeList, compilerOptions);
 		options.extend && extendOptions(options.extend);
 

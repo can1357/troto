@@ -495,9 +495,30 @@ export function createFd(root: Root): pb.FileDescriptorProto {
 	return out;
 }
 export function createFdSet(roots: Iterable<Root>): pb.FileDescriptorSet {
-	const out = new pb.FileDescriptorSet();
+	const fd: pb.FileDescriptorProto[] = [];
 	for (const root of roots) {
-		out.addFile(createFd(root));
+		fd.push(createFd(root));
+	}
+
+	// Sort in number of deps
+	fd.sort((a, b) => a.getDependencyList().length - b.getDependencyList().length);
+
+	// Sort in DAG order
+	const out = new pb.FileDescriptorSet();
+	const inserted = new Set<pb.FileDescriptorProto>();
+	const insert = (dep: pb.FileDescriptorProto) => {
+		if (inserted.has(dep)) return;
+		inserted.add(dep);
+		out.addFile(dep);
+		for (const d of dep.getDependencyList()) {
+			const idx = fd.findIndex(f => f.getName() === d);
+			if (idx !== -1) {
+				insert(fd[idx]);
+			}
+		}
+	};
+	for (const f of fd) {
+		insert(f);
 	}
 	return out;
 }

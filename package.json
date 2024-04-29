@@ -1,6 +1,6 @@
 {
 	"name": "troto",
-	"version": "1.0.8",
+	"version": "1.1.2",
 	"type": "module",
 	"bin": {
 		"trotoc": "dist/cli.js"
@@ -15,7 +15,10 @@
 	},
 	"author": "Can Bölük",
 	"license": "MIT",
-	"repository": "elyxium-labs/troto",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/elyxium-labs/troto.git"
+	},
 	"description": "Troto compiler",
 	"devDependencies": {
 		"@types/node": "^20.12.7",

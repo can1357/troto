@@ -32,6 +32,7 @@ const CompilerOptions = z
 			go: z.string(),
 			java: z.string()
 		}),
+		noDump: z.boolean(),
 		plugins: z.record(PluginOptions),
 		extend: z
 			.object({
@@ -107,7 +108,8 @@ export class Compiler {
 			if (pathRelativeToPackage.startsWith('types/') || pathRelativeToPackage.startsWith('types\\')) {
 				pathRelativeToPackage = pathRelativeToPackage.slice(6);
 			}
-			const packageParts = path.dirname(pathRelativeToPackage).split(path.sep);
+			pathRelativeToPackage = pathRelativeToPackage.replaceAll(path.sep, '/');
+			const packageParts = path.dirname(pathRelativeToPackage).split('/');
 			const [baseName] = path.basename(pathRelativeToPackage).split('.').slice(0, 1);
 			const packageName = packageParts.map(s => snakeCase(s)).join('.');
 			const protoFile = new OutputFile(pathRelativeToPackage, this.resolver, file);
@@ -409,7 +411,9 @@ export class Compiler {
 		const plugins = Object.entries(this.options?.plugins ?? {});
 		if (!plugins.length) return;
 		const fullList = proto.cvt.createFdSet(this.files.values());
-		this.writeFile([this.defaultOutDir(), 'request.json'], JSON.stringify(fullList.toObject(), null, 2));
+		if (!this.options.noDump) {
+			this.writeFile([this.defaultOutDir(), 'request.json'], JSON.stringify(fullList.toObject(), null, 2));
+		}
 
 		// Split by package
 		const byPackage = new Map<string, string[]>();

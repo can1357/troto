@@ -155,6 +155,23 @@ export abstract class Scope<S extends Stmt = Stmt> implements Stmt {
 		}
 		return scope;
 	}
+	toHierarchy(): string[] {
+		if (this.parent) {
+			return [...this.parent.toHierarchy(), this.scopeName];
+		} else {
+			return [this.scopeName];
+		}
+	}
+	toSemiQualified(other?: Scope): string {
+		const a = this.toHierarchy();
+		const b = other?.toHierarchy() ?? [];
+		for (let n = 0; n < b.length; n++) {
+			if (a[n] !== b[n]) {
+				return a.slice(n).join('.');
+			}
+		}
+		return this.scopeName;
+	}
 
 	// Adds a statement to the scope.
 	push<T extends S>(stmt: T): T {
@@ -249,13 +266,14 @@ export abstract class Stmt implements Visitable {
 export const enum PrintFlags {
 	None = 0,
 	FullyQualified = 1 << 0,
-	Debug = 1 << 1
+	Debug = 1 << 1,
+	SemiQualified = 1 << 2
 }
 
 // Expression interface for all expressions in the proto file.
 export interface Expr extends Visitable {
 	// Prints the expression as an inline string.
-	print(fl?: PrintFlags): string;
+	print(fl?: PrintFlags, scope?: Scope): string;
 }
 
 // TypeKind is a type of a field.
@@ -287,7 +305,10 @@ export abstract class TypeDef<S extends Stmt = Stmt> extends Scope<S> implements
 	constructor(public name: string, attrs?: OptionsInit) {
 		super(attrs);
 	}
-	print(fl: PrintFlags = PrintFlags.None): string {
+	print(fl: PrintFlags = PrintFlags.None, scope?: Scope): string {
+		if (fl & PrintFlags.SemiQualified) {
+			return this.toSemiQualified(scope);
+		}
 		return fl & PrintFlags.FullyQualified ? this.qualifiedScopeName : this.name;
 	}
 	writeScope(pad?: string): string[] {
@@ -357,7 +378,7 @@ export abstract class FieldDef extends Stmt implements Expr {
 		super();
 		this.options.assign(attrs);
 	}
-	print(fl: PrintFlags = PrintFlags.None): string {
+	print(fl: PrintFlags = PrintFlags.None, scope?: Scope): string {
 		if (!(fl & PrintFlags.FullyQualified)) {
 			return this.name;
 		}

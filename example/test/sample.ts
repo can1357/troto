@@ -10,6 +10,12 @@ export interface Vector3f extends Vector3<float> {}
 export interface Vector3d extends Vector3<double> {}
 export interface Vector3i extends Vector3<int32> {}
 
+// Importing works as expected, google types are provided by troto
+import { Struct } from 'troto/types/google/protobuf/struct';
+
+// You can also force an import by prefixing with '?'
+import '?my/file.proto';
+
 // This will add `option a = "b";` to the generated definition of ComplexType
 /*** @option a=b */
 export interface ComplexType {
@@ -38,6 +44,7 @@ export interface ComplexType {
 	b12: fixed64;
 	b13: sfixed32;
 	b14: sfixed64;
+	str: Struct;
 
 	// Javascript types map to protobuf types as well.
 	date: Date; // google.protobuf.Timestamp

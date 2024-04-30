@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { PrintFlags, TypeExpr, TypeKind, Visitor } from './base.js';
+import { PrintFlags, Scope, TypeExpr, TypeKind, Visitor } from './base.js';
 
 export enum Builtin {
 	int32,
@@ -27,7 +27,7 @@ export class BuiltinTypeExpr implements TypeExpr {
 	readonly inner = [];
 	constructor(public name: string, public kind: TypeKind) {}
 
-	print(fl?: PrintFlags): string {
+	print(): string {
 		return this.name;
 	}
 	get comparable(): boolean {
@@ -75,7 +75,7 @@ export const Builtins = [
 
 export abstract class ComplexTypeExpr implements TypeExpr {
 	abstract inner: TypeExpr[];
-	abstract print(fl?: PrintFlags): string;
+	abstract print(fl?: PrintFlags, scope?: Scope): string;
 	abstract get comparable(): boolean;
 	abstract get normal(): boolean;
 	get kind(): TypeKind {
@@ -103,8 +103,8 @@ export class MapTypeExpr extends ComplexTypeExpr {
 		return this.inner[1];
 	}
 
-	print(fl?: PrintFlags): string {
-		return `map<${this.inner[0].print(fl)}, ${this.inner[1].print(fl)}>`;
+	print(fl?: PrintFlags, scope?: Scope): string {
+		return `map<${this.inner[0].print(fl, scope)}, ${this.inner[1].print(fl, scope)}>`;
 	}
 
 	get comparable(): boolean {
@@ -124,8 +124,8 @@ export class StreamTypeExpr extends ComplexTypeExpr {
 		this.inner = [inner];
 	}
 
-	print(fl?: PrintFlags): string {
-		return `stream ${this.inner[0].print(fl)}`;
+	print(fl?: PrintFlags, scope?: Scope): string {
+		return `stream ${this.inner[0].print(fl, scope)}`;
 	}
 
 	get comparable(): boolean {
@@ -145,8 +145,8 @@ export class RepeatedTypeExpr extends ComplexTypeExpr {
 		this.inner = [inner];
 	}
 
-	print(fl?: PrintFlags): string {
-		return `repeated ${this.inner[0].print(fl)}`;
+	print(fl?: PrintFlags, scope?: Scope): string {
+		return `repeated ${this.inner[0].print(fl, scope)}`;
 	}
 
 	get comparable(): boolean {
@@ -166,8 +166,8 @@ export class OptionalTypeExpr extends ComplexTypeExpr {
 		this.inner = [inner];
 	}
 
-	print(fl?: PrintFlags): string {
-		return `optional ${this.inner[0].print(fl)}`;
+	print(fl?: PrintFlags, scope?: Scope): string {
+		return `optional ${this.inner[0].print(fl, scope)}`;
 	}
 
 	get comparable(): boolean {
@@ -183,7 +183,7 @@ export class TypeRefExpr implements TypeExpr {
 	readonly inner = [];
 	constructor(public name: string, public kind: TypeKind, public sourceType?: ts.Type) {}
 
-	print(fl?: PrintFlags): string {
+	print(): string {
 		return this.name;
 	}
 

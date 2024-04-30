@@ -1,4 +1,4 @@
-import { FieldDef, IndexAllocator, OptionsExpr, PrintFlags, TypeDef, TypeExpr, TypeKind, Visitor } from './base.js';
+import { FieldDef, IndexAllocator, OptionsExpr, PrintFlags, Scope, TypeDef, TypeExpr, TypeKind, Visitor } from './base.js';
 
 // message name { ... }
 type MessageBodyStmt = SimpleFieldDef | EnumDef | MessageDef | ReservedFieldDef;
@@ -62,7 +62,7 @@ export class ServiceDef extends TypeDef<ServiceBodyStmt> {
 export abstract class TypeDefAndUseExpr implements TypeExpr {
 	options = new OptionsExpr();
 
-	abstract writeNamed(s: string): string[];
+	abstract writeNamed(s: string, scope?: Scope): string[];
 	abstract inner: TypeExpr[];
 
 	print(): string {
@@ -91,17 +91,17 @@ export class OneofTypeExpr extends TypeDefAndUseExpr {
 	get inner(): TypeExpr[] {
 		return this.fields.map(f => f.type);
 	}
-	writeNamed(s: string): string[] {
+	writeNamed(s: string, scope?: Scope): string[] {
 		return [
 			`oneof ${s} {`,
 			...this.options.long('\t'),
-			...this.fields.map(f => `\t${f.type.print()} ${f.name} = ${f.number}${f.options.short()};`),
+			...this.fields.map(f => `\t${f.type.print(PrintFlags.SemiQualified, scope)} ${f.name} = ${f.number}${f.options.short()};`),
 			`}`
 		];
 	}
-	print(fl?: PrintFlags) {
+	print(fl?: PrintFlags, scope?: Scope) {
 		if (fl && fl & PrintFlags.Debug) {
-			return `oneof { ${this.fields.map(f => f.print(fl)).join(', ')} }`;
+			return `oneof { ${this.fields.map(f => f.print(fl, scope)).join(', ')} }`;
 		} else {
 			return super.print();
 		}
@@ -122,15 +122,18 @@ export class RpcTypeExpr extends TypeDefAndUseExpr {
 		return [this.input, this.output];
 	}
 
-	print(fl?: PrintFlags) {
+	print(fl?: PrintFlags, scope?: Scope) {
 		if (fl && fl & PrintFlags.Debug) {
-			return `rpc { ${this.input.print()} } returns { ${this.output.print()} }`;
+			return `rpc { ${this.input.print(fl, scope)} } returns { ${this.output.print(fl, scope)} }`;
 		} else {
 			return super.print();
 		}
 	}
-	writeNamed(s: string): string[] {
-		const result = `rpc ${s} (${this.input.print()}) returns (${this.output.print()})`;
+	writeNamed(s: string, scope?: Scope): string[] {
+		const result = `rpc ${s} (${this.input.print(PrintFlags.SemiQualified, scope)}) returns (${this.output.print(
+			PrintFlags.SemiQualified,
+			scope
+		)})`;
 		if (this.options.size == 0) return [result + ';'];
 		return [result + '{', ...this.options.long('\t'), '}'];
 	}
@@ -157,9 +160,9 @@ export class SimpleFieldDef extends FieldDef {
 
 	write(): string[] {
 		if (this.type instanceof TypeDefAndUseExpr) {
-			return this.type.writeNamed(this.name);
+			return this.type.writeNamed(this.name, this.enclosingScope);
 		}
-		return [`${this.type.print()} ${this.name} = ${this.number}${this.options.short()};`];
+		return [`${this.type.print(PrintFlags.SemiQualified, this.enclosingScope)} ${this.name} = ${this.number}${this.options.short()};`];
 	}
 
 	allocate(alloc: IndexAllocator, pass: 'mark' | 'sweep'): void {

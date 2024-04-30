@@ -68,9 +68,9 @@ export class Compiler {
 		options.dump ??= true;
 		options.proto ??= true;
 		options.ignore ??= ['google.protobuf'];
-
-		console.log('Root:', root);
 		const includeList: string[] = [];
+
+		// include all .ts files, except those in node_modules
 		fs.readdirSync(root, { withFileTypes: true }).forEach(root2 => {
 			const base = path.join(root, root2.name);
 			if (root2.isFile()) {
@@ -81,6 +81,12 @@ export class Compiler {
 						includeList.push(fs.realpathSync(path.join(base, f.name)));
 					}
 				}
+			}
+		});
+		// include all .ts files in node_modules/troto/types/google
+		fs.readdirSync(path.join(root, 'node_modules/troto/types/google'), { recursive: true, withFileTypes: true }).forEach(f => {
+			if (f.isFile() && f.name.endsWith('.ts')) {
+				includeList.push(fs.realpathSync(path.join(root, 'node_modules/troto/types/google', f.name)));
 			}
 		});
 

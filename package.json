@@ -1,7 +1,7 @@
 {
 	"name": "troto",
 	"description": "Troto protobuf compiler",
-	"version": "1.2.6",
+	"version": "1.2.7",
 	"type": "module",
 	"author": "Can Bölük",
 	"license": "MIT",

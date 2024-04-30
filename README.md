@@ -88,6 +88,12 @@ export interface Vector3f extends Vector3<float> {}
 export interface Vector3d extends Vector3<double> {}
 export interface Vector3i extends Vector3<int32> {}
 
+// Importing works as expected, google types are provided by troto
+import { Struct } from 'troto/types/google/protobuf/struct';
+
+// You can also force an import by prefixing with '?'
+import '?my/file.proto';
+
 // This will add `option a = "b";` to the generated definition of ComplexType
 /*** @option a=b */
 export interface ComplexType {
@@ -116,6 +122,7 @@ export interface ComplexType {
 	b12: fixed64;
 	b13: sfixed32;
 	b14: sfixed64;
+	str: Struct;
 
 	// Javascript types map to protobuf types as well.
 	date: Date; // google.protobuf.Timestamp
@@ -153,13 +160,17 @@ package test;
 option java_multiple_files = true;
 option cc_enable_arenas = true;
 option optimize_for = 1;
-option csharp_namespace = "Test";
+option csharp_namespace = "Example.Test";
 option java_package = "com.test";
 option php_namespace = "Test";
 option ruby_package = "Test";
 option java_outer_classname = "SampleProto";
 option php_metadata_namespace = "Test\PBMetadata";
 option go_package = "test";
+import "my/file.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 message Vector3f {
 	float x = 1;
 	float y = 2;
@@ -197,11 +208,12 @@ message ComplexType {
 	fixed64 b12 = 18;
 	sfixed32 b13 = 19;
 	sfixed64 b14 = 20;
-	google.protobuf.Timestamp date = 21;
-	google.protobuf.Any any = 22;
-	repeated google.protobuf.Any arr = 23;
-	bytes bytes = 24;
-	repeated uint32 u32 = 25;
+	google.protobuf.Struct str = 21;
+	google.protobuf.Timestamp date = 22;
+	google.protobuf.Any any = 23;
+	repeated google.protobuf.Any arr = 24;
+	bytes bytes = 25;
+	repeated uint32 u32 = 26;
 }
 service VectorService {
 	rpc MulF32 (MulF32Request) returns (Vector3f);

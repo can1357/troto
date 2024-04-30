@@ -36,6 +36,7 @@ const CompilerOptions = z
 			.partial(),
 		dump: z.boolean(),
 		proto: z.boolean(),
+		optionals315: z.boolean(),
 		plugins: z.record(PluginOptions),
 		ignore: z.string().array(),
 		options: z.record(Literal),
@@ -54,7 +55,7 @@ const CompilerOptions = z
 			.partial()
 	})
 	.partial();
-type CompilerOptions = z.infer<typeof CompilerOptions>;
+export type CompilerOptions = z.infer<typeof CompilerOptions>;
 
 export class Compiler {
 	resolver: Resolver;
@@ -133,7 +134,7 @@ export class Compiler {
 			const packageParts = path.dirname(pathRelativeToPackage).split('/');
 			const [baseName] = path.basename(pathRelativeToPackage).split('.').slice(0, 1);
 			const packageName = packageParts.map(s => snakeCase(s)).join('.');
-			const protoFile = new OutputFile(pathRelativeToPackage, this.resolver, file);
+			const protoFile = new OutputFile(pathRelativeToPackage, this.resolver, file, this.options);
 
 			// Set the package name and default options
 			protoFile.package = packageName;
@@ -231,6 +232,7 @@ export class Compiler {
 
 		// Process all files
 		for (const file of this.files.values()) {
+			console.log('Processing:', file.name);
 			this.processChildren(file, file.source);
 		}
 

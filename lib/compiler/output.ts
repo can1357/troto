@@ -2,14 +2,14 @@ import ts from 'typescript';
 import * as proto from '../proto/index.js';
 import { Resolver } from './resolver.js';
 import { getQualifiedName, printTypeFlags, resolveSymbol } from './utils.js';
+import type { CompilerOptions } from './compiler.js';
 
 type TSDecl = ts.TypeAliasDeclaration | ts.InterfaceDeclaration | ts.EnumDeclaration | ts.ClassDeclaration;
 
 export class OutputFile extends proto.Root {
 	defined = new Map<string, proto.TypeDef>();
 	symbolMap = new Map<ts.Symbol, proto.TypeDef>();
-
-	constructor(name: string, public resolver: Resolver, public source: ts.SourceFile) {
+	constructor(name: string, public resolver: Resolver, public source: ts.SourceFile, public compilerOptions: CompilerOptions) {
 		super(name);
 	}
 	get checker() {
@@ -179,8 +179,17 @@ export class OutputFile extends proto.Root {
 
 					const { type, attrs } = this.resolver.mapType(memberType);
 					//console.log(` ${memberName}:`, type.print(proto.PrintFlags.Debug), idx, attrs);
-					const res = msgDef.push(new proto.SimpleFieldDef(memberName, type, idx));
+					let res: proto.SimpleFieldDef = new proto.SimpleFieldDef(memberName, type, idx);
+					if (!this.compilerOptions.optionals315) {
+						if (type instanceof proto.OptionalTypeExpr) {
+							// oneof with a single field
+							res.type = type.inner[0];
+							const oneof = new proto.OneofTypeExpr([res]);
+							res = new proto.SimpleFieldDef(memberName + '_opt', oneof, idx);
+						}
+					}
 					if (attrs) res.options.assign(attrs);
+					res = msgDef.push(res);
 				}
 			}
 		});

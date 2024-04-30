@@ -50,6 +50,9 @@ All available options are:
 			"go": "github.com/yourname/yourproject"
 		},
 
+		// If set generates optional fields without the single-item oneof wrapper. Proto 3.15+.
+		"optionals315": false,
+
 		// Whether to generate .proto files, or just call the plugins
 		"proto": true,
 

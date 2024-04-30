@@ -38,6 +38,7 @@ const CompilerOptions = z
 		proto: z.boolean(),
 		plugins: z.record(PluginOptions),
 		ignore: z.string().array(),
+		options: z.record(Literal),
 		extend: z
 			.object({
 				file: z.record(ExtensionOptions),
@@ -68,12 +69,20 @@ export class Compiler {
 		options.proto ??= true;
 		options.ignore ??= ['google.protobuf'];
 
+		console.log('Root:', root);
 		const includeList: string[] = [];
-		for (const file of fs.readdirSync(root, { recursive: true, withFileTypes: true })) {
-			if (file.isFile() && file.name.endsWith('.ts')) {
-				includeList.push(fs.realpathSync(path.join(file.path ?? root, file.name)));
+		fs.readdirSync(root, { withFileTypes: true }).forEach(root2 => {
+			const base = path.join(root, root2.name);
+			if (root2.isFile()) {
+				includeList.push(fs.realpathSync(base));
+			} else if (root2.name !== 'node_modules') {
+				for (const f of fs.readdirSync(base, { recursive: true, withFileTypes: true })) {
+					if (f.isFile() && f.name.endsWith('.ts')) {
+						includeList.push(fs.realpathSync(path.join(base, f.name)));
+					}
+				}
 			}
-		}
+		});
 
 		const compilerOptions: ts.CompilerOptions = {};
 
@@ -127,12 +136,13 @@ export class Compiler {
 				cc_enable_arenas: true,
 				optimize_for: { enum: 1 } /*FileOptions.OptimizeMode.SPEED*/,
 				csharp_namespace: packageParts.map(s => pascalCase(s)).join('.'),
-				java_package: `${options.package?.java ?? 'com.'}${packageParts.map(s => snakeCase(s)).join('.')}`,
+				java_package: `${options.package?.java ? options.package?.java + '.' : 'com.'}${packageParts.map(s => snakeCase(s)).join('.')}`,
 				php_namespace: packageParts.map(s => pascalCase(s)).join('\\'),
 				ruby_package: packageParts.map(s => pascalCase(s)).join('::'),
 				java_outer_classname: pascalCase(baseName) + 'Proto',
 				php_metadata_namespace: packageParts.map(s => pascalCase(s)).join('\\') + '\\PBMetadata',
-				go_package: `${options.package?.go ? options.package?.go + '/' : ''}${packageParts.map(s => snakeCase(s)).join('/')}`
+				go_package: `${options.package?.go ? options.package?.go + '/' : ''}${packageParts.map(s => snakeCase(s)).join('/')}`,
+				...(options.options ?? {})
 			});
 
 			// Handle top level: FileOpt('objc_class_prefix', 'GPB');
@@ -149,7 +159,11 @@ export class Compiler {
 									const key = this.resolver.getLitralValue(this.checker.getTypeAtLocation(args[0]));
 									const val = this.resolver.getLitralValue(this.checker.getTypeAtLocation(args[1]));
 									if (typeof key === 'string' && val !== null) {
-										protoFile.options.set(key, val);
+										if (key === 'package' && typeof val === 'string') {
+											protoFile.package = val;
+										} else {
+											protoFile.options.set(key, val);
+										}
 									}
 								}
 							}
@@ -168,33 +182,7 @@ export class Compiler {
 			if (ts.isImportDeclaration(node)) {
 				const spec = node.moduleSpecifier as ts.StringLiteral;
 				const url = spec.text;
-				if (url.startsWith('.')) {
-					let relative = path.join(file.source.fileName, '../', url);
-					if (!relative.endsWith('.ts')) {
-						if (relative.endsWith('.js')) {
-							relative = relative.slice(0, -3) + '.ts';
-						} else {
-							relative += '.ts';
-						}
-					}
-					if (relative.startsWith('..')) {
-						console.error('Failed to resolve import:', url, relative);
-						return;
-					}
-					const src = this.resolver.program.getSourceFile(relative);
-					if (!src) {
-						console.error('Failed to resolve import:', url, relative);
-						return;
-					}
-
-					const target = this.files.get(src);
-					if (target) {
-						console.log('Importing:', file.name, target.name);
-						file.imports.push({ path: target.name.replace(/\.ts$/, '.proto').replaceAll('\\', '/') });
-					} else {
-						console.error('Failed to find imported file');
-					}
-				} else if (!node.importClause) {
+				if (!node.importClause) {
 					if (url.startsWith('?')) {
 						file.imports.push({ path: url.slice(1) });
 					} else {

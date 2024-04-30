@@ -132,10 +132,14 @@ export class Resolver {
 				if (ty.types.length === 1) {
 					return this.mapType(ty.types[0]);
 				}
+				// Boolean true|false case
+				if (ty.types.every(t => t.flags & ts.TypeFlags.BooleanLiteral)) {
+					return { type: proto.BOOL };
+				}
 
 				// Nullable type
-				const nonNull = ty.getNonNullableType();
-				if (!nonNull.isUnion()) {
+				const nonNull = this.checker.getNonNullableType(ty);
+				if (!nonNull.isUnion() || nonNull.types.length < ty.types.length) {
 					const { type, attrs } = this.mapType(nonNull);
 					return { type: new proto.OptionalTypeExpr(type), attrs };
 				}

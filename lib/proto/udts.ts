@@ -1,4 +1,4 @@
-import { FieldDef, IndexAllocator, OptionsExpr, TypeDef, TypeExpr, TypeKind, Visitor } from './base.js';
+import { FieldDef, IndexAllocator, OptionsExpr, PrintFlags, TypeDef, TypeExpr, TypeKind, Visitor } from './base.js';
 
 // message name { ... }
 type MessageBodyStmt = SimpleFieldDef | EnumDef | MessageDef | ReservedFieldDef;
@@ -99,6 +99,13 @@ export class OneofTypeExpr extends TypeDefAndUseExpr {
 			`}`
 		];
 	}
+	print(fl?: PrintFlags) {
+		if (fl && fl & PrintFlags.Debug) {
+			return `oneof { ${this.fields.map(f => f.print(fl)).join(', ')} }`;
+		} else {
+			return super.print();
+		}
+	}
 	visit(fn: Visitor): void {
 		//super.visit(fn); Inner is synthetic
 		this.fields.forEach(f => f.visit(fn));
@@ -115,6 +122,13 @@ export class RpcTypeExpr extends TypeDefAndUseExpr {
 		return [this.input, this.output];
 	}
 
+	print(fl?: PrintFlags) {
+		if (fl && fl & PrintFlags.Debug) {
+			return `rpc { ${this.input.print()} } returns { ${this.output.print()} }`;
+		} else {
+			return super.print();
+		}
+	}
 	writeNamed(s: string): string[] {
 		const result = `rpc ${s} (${this.input.print()}) returns (${this.output.print()})`;
 		if (this.options.size == 0) return [result + ';'];

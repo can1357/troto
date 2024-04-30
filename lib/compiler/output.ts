@@ -71,13 +71,46 @@ export class OutputFile extends proto.Root {
 			} else if (ty !== type.sourceType) {
 				return this.createType(type.sourceType, at);
 			}
+			if (ty.symbol.getDeclarations()?.[0].getSourceFile() !== at.getSourceFile()) {
+				return;
+			}
 
+			const initialOptions: proto.OptionsRecord = {};
+			ty.getSymbol()
+				?.getJsDocTags()
+				.forEach(tag => {
+					if (tag.name === 'option') {
+						const text = tag.text
+							?.filter(s => s.kind === 'text')
+							.map(s => s.text)
+							.join('');
+						if (!text) return;
+
+						let [key, value] = text.split('=');
+						if (!key || !value) return;
+						value = value.trim();
+						key = key.trim();
+						if (value === 'true') {
+							initialOptions[key] = true;
+						} else if (value === 'false') {
+							initialOptions[key] = false;
+						} else if (!Number.isNaN(parseInt(value))) {
+							initialOptions[key] = parseInt(value);
+						} else if (!Number.isNaN(parseFloat(value))) {
+							initialOptions[key] = parseFloat(value);
+						} else if (value[0] === '"' && value[value.length - 1] === '"') {
+							initialOptions[key] = value.slice(1, -1);
+						} else {
+							initialOptions[key] = value;
+						}
+					}
+				});
 			const qual = resolveSymbol(this, ty.symbol, id);
-			//console.log('Creating type:', `${qual.name} (${qual.qualifiedName})`, printTypeFlags(ty.flags));
+			console.log('Creating type:', `${qual.name} (${qual.qualifiedName})`, printTypeFlags(ty.flags), initialOptions);
 
 			// Declare enum types
 			if ((id || ty.symbol) && ty.flags & ts.TypeFlags.EnumLiteral) {
-				const enumDef = new proto.EnumDef(qual.name);
+				const enumDef = new proto.EnumDef(qual.name, initialOptions);
 				enumDef.sourceType = ty;
 				this.setDefinition(ty.symbol, id, enumDef);
 				qual.scope.push(enumDef);
@@ -113,7 +146,7 @@ export class OutputFile extends proto.Root {
 			});
 			const isService = members.some(([sym, ty]) => ty.getCallSignatures().length > 0);
 			if (isService) {
-				const svcDef = new proto.ServiceDef(qual.name);
+				const svcDef = new proto.ServiceDef(qual.name, initialOptions);
 				svcDef.sourceType = ty;
 				this.setDefinition(ty.symbol, id, svcDef);
 				svcDef.options.assign(attrs);
@@ -129,7 +162,7 @@ export class OutputFile extends proto.Root {
 					if (attrs) res.options.assign(attrs);
 				}
 			} else {
-				const msgDef = new proto.MessageDef(qual.name);
+				const msgDef = new proto.MessageDef(qual.name, initialOptions);
 				msgDef.sourceType = ty;
 				this.setDefinition(ty.symbol, id, msgDef);
 				msgDef.options.assign(attrs);
@@ -145,6 +178,7 @@ export class OutputFile extends proto.Root {
 					}
 
 					const { type, attrs } = this.resolver.mapType(memberType);
+					//console.log(` ${memberName}:`, type.print(proto.PrintFlags.Debug), idx, attrs);
 					const res = msgDef.push(new proto.SimpleFieldDef(memberName, type, idx));
 					if (attrs) res.options.assign(attrs);
 				}

@@ -1,6 +1,6 @@
 // Non-exported types are not emitted
 interface Vector3<T> {
-	x$1: T; // $ prefix sets the field number
+	x$1: T; // $ suffix sets the field number
 	y$2: T;
 	z: T; // Default field number is the field order
 }
@@ -47,7 +47,14 @@ export interface ComplexType {
 	u32: Uint32Array; // repeated uint32
 }
 
-FileOpt('csharp_namespace', 'Example.Test'); // Set file options for the generated file
+// Type aliases are not emitted either, exported or not. They are for your
+// internal use across different files
+export type Test = {
+	z: 4;
+};
+
+// You can also set file options via the FileOpt function
+FileOpt('csharp_namespace', 'Example.Test');
 
 // Exported interfaces with methods are emitted as services
 export interface VectorService {

@@ -1,10 +1,28 @@
 {
 	"name": "troto",
-	"version": "1.2.2",
+	"description": "Troto protobuf compiler",
+	"version": "1.2.6",
 	"type": "module",
+	"author": "Can Bölük",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/elyxium-labs/troto.git"
+	},
+	"bugs": "https://github.com/elxyium-labs/troto/issues",
+	"homepage": "https://github.com/elyxium-labs/troto#readme",
 	"bin": {
 		"trotoc": "dist/cli.js"
 	},
+	"keywords": [
+		"proto",
+		"protobuf",
+		"protocol-buffers",
+		"serialization",
+		"typescript",
+		"proto3",
+		"protoc"
+	],
 	"files": [
 		"dist",
 		"types"
@@ -13,13 +31,9 @@
 		"build": "tsc",
 		"start": "node dist/cli.js"
 	},
-	"author": "Can Bölük",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/elyxium-labs/troto.git"
+	"engines": {
+		"node": ">=18.0.0"
 	},
-	"description": "Troto compiler",
 	"devDependencies": {
 		"@types/node": "^20.12.7",
 		"@types/google-protobuf": "^3.15.12",

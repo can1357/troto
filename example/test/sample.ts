@@ -29,6 +29,8 @@ export interface ComplexType {
 
 	ext1: Ext<Vector3f, { y: 4 }>; // Ext<> can be used to define options for fields
 
+	union: { f: Vector3f } | { d: Vector3d }; // Unions are emitted as oneof
+
 	// All primitive types are supported with their own names
 	b1: bool;
 	b2: double;

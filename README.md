@@ -110,6 +110,8 @@ export interface ComplexType {
 
 	ext1: Ext<Vector3f, { y: 4 }>; // Ext<> can be used to define options for fields
 
+	union: { f: Vector3f } | { d: Vector3d }; // Unions are emitted as oneof
+
 	// All primitive types are supported with their own names
 	b1: bool;
 	b2: double;
@@ -193,30 +195,34 @@ message ComplexType {
 	option a = "b";
 	optional Vector3f opt1 = 1;
 	optional Vector3d opt2 = 2;
+	oneof union {
+		Vector3f f = 7;
+		Vector3d d = 8;
+	}
 	map<string, Vector3i> map1 = 3;
 	repeated Vector3f rep1 = 4;
 	repeated Vector3f rep2 = 5;
 	Vector3f ext1 = 6 [y=4];
-	bool b1 = 7;
-	double b2 = 8;
-	bytes b3 = 9;
-	float b4 = 10;
-	int32 b5 = 11;
-	int64 b6 = 12;
-	uint32 b7 = 13;
-	uint64 b8 = 14;
-	sint32 b9 = 15;
-	sint64 b10 = 16;
-	fixed32 b11 = 17;
-	fixed64 b12 = 18;
-	sfixed32 b13 = 19;
-	sfixed64 b14 = 20;
-	google.protobuf.Struct str = 21;
-	google.protobuf.Timestamp date = 22;
-	google.protobuf.Any any = 23;
-	repeated google.protobuf.Any arr = 24;
-	bytes bytes = 25;
-	repeated uint32 u32 = 26;
+	bool b1 = 9;
+	double b2 = 10;
+	bytes b3 = 11;
+	float b4 = 12;
+	int32 b5 = 13;
+	int64 b6 = 14;
+	uint32 b7 = 15;
+	uint64 b8 = 16;
+	sint32 b9 = 17;
+	sint64 b10 = 18;
+	fixed32 b11 = 19;
+	fixed64 b12 = 20;
+	sfixed32 b13 = 21;
+	sfixed64 b14 = 22;
+	google.protobuf.Struct str = 23;
+	google.protobuf.Timestamp date = 24;
+	google.protobuf.Any any = 25;
+	repeated google.protobuf.Any arr = 26;
+	bytes bytes = 27;
+	repeated uint32 u32 = 28;
 }
 service VectorService {
 	rpc MulF32 (MulF32Request) returns (Vector3f);

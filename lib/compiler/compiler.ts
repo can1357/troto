@@ -411,7 +411,11 @@ export class Compiler {
 
 		// spawn protoc-gen-go
 		// write to stdin <- fds
-		const proc = spawnSync('protoc-gen-' + name, { input: cgr.serializeBinary() });
+		let pluginFile = 'protoc-gen-' + name;
+		if (fs.existsSync('./' + pluginFile)) {
+			pluginFile = './' + pluginFile;
+		}
+		const proc = spawnSync(pluginFile, { input: cgr.serializeBinary() });
 		if (proc.error) {
 			throw new Error(`[${name}] Failed to run generator`, { cause: proc.error });
 		}

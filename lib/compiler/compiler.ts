@@ -323,7 +323,7 @@ export class Compiler {
 								defn = targetFile.getDefinition(val.name);
 							}
 							if (defn) {
-								if (targetFile.package !== file.package) {
+								if (targetFile.name !== file.name) {
 									const importName = targetFile.name.replace(/\.ts$/, '.proto');
 									if (!file.imports.find(i => i.path === importName)) {
 										file.imports.push({ path: importName });

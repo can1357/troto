@@ -331,21 +331,10 @@ function addFieldDesc(qual: string, outer: pb.DescriptorProto, def: SimpleFieldD
 		const opt = new pb.MessageOptions();
 		opt.setMapEntry(true);
 		mapEntry.setOptions(opt);
-
 		const entryName = pascalCase(def.name) + 'Entry';
 		mapEntry.setName(entryName);
-		const keyField = new pb.FieldDescriptorProto();
-		keyField.setName('key');
-		keyField.setNumber(1);
-		keyField.setLabel(pb.FieldDescriptorProto.Label.LABEL_OPTIONAL);
-		keyField.setType(pb.FieldDescriptorProto.Type.TYPE_INT32);
-		mapEntry.addField(keyField);
-		const valueField = new pb.FieldDescriptorProto();
-		valueField.setName('value');
-		valueField.setNumber(2);
-		valueField.setLabel(pb.FieldDescriptorProto.Label.LABEL_OPTIONAL);
-		valueField.setType(pb.FieldDescriptorProto.Type.TYPE_INT32);
-		mapEntry.addField(valueField);
+		addFieldDesc(qual, mapEntry, new SimpleFieldDef('key', type.key, 1), 'addField');
+		addFieldDesc(qual, mapEntry, new SimpleFieldDef('value', type.value, 2), 'addField');
 		field.setName(def.name);
 		field.setTypeName('.' + qual + '.' + entryName);
 		field.setType(pb.FieldDescriptorProto.Type.TYPE_MESSAGE);

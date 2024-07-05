@@ -15,10 +15,11 @@ import { spawnSync } from 'node:child_process';
 const Literal = z.string().or(z.number()).or(z.boolean()).or(z.null());
 const PluginOptions = z
 	.record(Literal)
-	.transform(({ outDir, ...rest }) => {
-		return { outDir: outDir as string, options: rest };
+	.transform(({ exec, outDir, ...rest }) => {
+		return { exec: (exec ?? null) as string | null, outDir: outDir as string, options: rest };
 	})
-	.refine(v => typeof v.outDir === 'string', { message: 'outDir must be a string' });
+	.refine(v => typeof v.outDir === 'string', { message: 'outDir must be a string' })
+	.refine(v => v.exec === null || typeof v.exec === 'string', { message: 'exec must be a string or null' });
 
 const ExtensionOptions = z.object({
 	field: z.number(),
@@ -414,10 +415,16 @@ export class Compiler {
 		// spawn protoc-gen-go
 		// write to stdin <- fds
 		let pluginFile = 'protoc-gen-' + name;
+		let args: string[] = [];
+		if (opts.exec?.length) {
+			args = opts.exec.split(' ');
+			pluginFile = args[0];
+			args = args.slice(1);
+		}
 		if (fs.existsSync('./' + pluginFile)) {
 			pluginFile = './' + pluginFile;
 		}
-		const proc = spawnSync(pluginFile, { input: cgr.serializeBinary() });
+		const proc = spawnSync(pluginFile, args, { input: cgr.serializeBinary() });
 		if (proc.error) {
 			throw new Error(`[${name}] Failed to run generator`, { cause: proc.error });
 		}

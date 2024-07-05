@@ -69,10 +69,13 @@ export class Resolver {
 			return this.mapType(this.checker.getTypeOfSymbol(sym));
 		}
 	}
-	synthesizeMsg(sym: ts.Symbol[], name: string, sourceType?: ts.Type): proto.MessageDef | proto.StreamTypeExpr {
+	synthesizeMsg(sym: ts.Symbol[], name: string, sourceType?: ts.Type): proto.MessageDef | proto.StreamTypeExpr | proto.TypeRefExpr {
+		if (sym.length === 0) {
+			return new proto.TypeRefExpr('google.protobuf.Empty', 'TYPE_MESSAGE');
+		}
 		if (sym.length === 1) {
 			const ty = this.mapSymbol(sym[0]);
-			if (ty.type instanceof proto.MessageDef) {
+			if (ty.type instanceof proto.MessageDef || ty.type instanceof proto.TypeRefExpr) {
 				return ty.type;
 			}
 			if (ty.type instanceof proto.StreamTypeExpr) {
@@ -316,12 +319,7 @@ export class Resolver {
 			const callSig = ty.getCallSignatures()?.[0];
 			if (callSig) {
 				const params = this.synthesizeMsg(callSig.getParameters(), ty.symbol.name + 'Request', ty);
-				let ret: proto.TypeExpr;
-				if (callSig.getReturnType().flags & ts.TypeFlags.Void) {
-					ret = this.synthesizeMsg([], ty.symbol.name + 'Response', ty);
-				} else {
-					ret = this.mapType(callSig.getReturnType()).type;
-				}
+				const ret = this.mapType(callSig.getReturnType()).type;
 				return { type: new proto.RpcTypeExpr(params, ret) };
 			}
 

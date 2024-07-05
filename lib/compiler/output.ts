@@ -106,7 +106,7 @@ export class OutputFile extends proto.Root {
 					}
 				});
 			const qual = resolveSymbol(this, ty.symbol, id);
-			console.log('Creating type:', `${qual.name} (${qual.qualifiedName})`, printTypeFlags(ty.flags), initialOptions);
+			//console.log('Creating type:', `${qual.name} (${qual.qualifiedName})`, printTypeFlags(ty.flags), initialOptions);
 
 			// Declare enum types
 			if ((id || ty.symbol) && ty.flags & ts.TypeFlags.EnumLiteral) {
